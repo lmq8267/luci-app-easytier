@@ -498,7 +498,7 @@ start_service() {
         fi
         
         #test -z "`opkg list-installed|grep curl`" && echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 缺少curl插件" >>/tmp/easytier.log
-        [ ! -s /usr/lib/opkg/info/luci-lib-fs.list ] && echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 缺少luci-lib-fs插件" >>/tmp/easytier.log
+        #[ ! -s /usr/lib/opkg/info/luci-lib-fs.list ] && echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 缺少luci-lib-fs插件" >>/tmp/easytier.log
         [ ! -s /usr/lib/opkg/info/unzip.list ] && echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 缺少unzip插件" >>/tmp/easytier.log
 	config_foreach start_et 'easytier'
 }
