@@ -26,7 +26,7 @@ jobs:
           ls
           mv luci-app-easytier*all.ipk luci-app-easytier_all.ipk
           mkdir -p /opt/outipk
-          cp -rf /opt/openwrt-sdk*/bin/packages/aarch64_generic/base/* /opt/outipk/*
+          cp -rf *.ipk /opt/outipk/
       - name: 上传
         uses: actions/upload-artifact@v4
         with:
