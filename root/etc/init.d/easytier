@@ -103,8 +103,8 @@ start_et() {
 	           curl -L -k -o /tmp/easytier.zip --connect-timeout 10 --retry 3 "${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip" || wget --no-check-certificate --timeout=10 --tries=3 -O /tmp/easytier.zip "${proxy}https://github.com/EasyTier/EasyTier/releases/download/${tag}/easytier-linux-${cpucore}-${tag}.zip"
 	           if [ "$?" = 0 ] ; then
 			unzip -q -o /tmp/easytier.zip -d /tmp
-	         	chmod +x /tmp/easytier-linux-${cpucore}-${tag}/*
-	         	mv -f /tmp/easytier-linux-${cpucore}-${tag}/* ${path}/*
+	         	chmod +x /tmp/easytier-linux-${cpucore}/easytier-*
+	         	mv -f /tmp/easytier-linux-${cpucore}/easytier-* ${path}/
                  	chmod +x "$easytierbin"
                 	 rm -rf /tmp/easytier.zip
                  	if [ "$($easytierbin -h 2>&1 | wc -l)" -gt 3 ]; then
