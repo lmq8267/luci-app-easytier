@@ -221,10 +221,11 @@ start_et() {
 		      uci set firewall.easytier_v6wg.enabled="1"
 	           fi
          else
-		local network_name network_secret ip_dhcp ipaddr peeradd external_node rpc_portal listenermode tunname relay_network disable_p2p disable_udp
-		local tcp_port ws_port wss_port wg_port desvice_name instance_name vpn_portal mtu default_protocol disable_encryption whitelist socks_port
+		local network_name network_secret ip_dhcp ipaddr peeradd external_node rpc_portal listenermode tunname relay_network disable_p2p disable_udp web_config
+		local tcp_port ws_port wss_port wg_port desvice_name instance_name vpn_portal mtu default_protocol disable_encryption whitelist socks_port comp
 		local multi_thread disable_ipv6 latency_first exit_node exit_nodes smoltcp no_tun manual_routes log check checkip proxy_network relay_all listener6
 
+		config_get web_config "$cfg" 'web_config'
 		config_get network_name "$cfg" 'network_name'
                 config_get network_secret "$cfg" 'network_secret'
                 config_get_bool ip_dhcp "$cfg" 'ip_dhcp' '0'
@@ -245,6 +246,7 @@ start_et() {
                 config_get instance_name "$cfg" 'instance_name'
                 config_get vpn_portal "$cfg" 'vpn_portal'
 		config_get mtu "$cfg" 'mtu'
+		config_get comp "$cfg" 'comp'
                 config_get default_protocol "$cfg" 'default_protocol'
                 config_get_bool disable_encryption "$cfg" 'disable_encryption' '0'
                 config_get whitelist "$cfg" 'whitelist'
@@ -266,6 +268,7 @@ start_et() {
                 
 		procd_open_instance "easytier"
 		procd_set_param command "$easytierbin"
+		#if [ "$etcmd" = "etcmd" ] ; then
 		[ -z "$network_name" ] || procd_append_param command --network-name "$network_name"
 		[ -z "$network_secret" ] || procd_append_param command --network-secret "$network_secret"
 		[ -z "$ipaddr" ] || procd_append_param command -i "$ipaddr"
