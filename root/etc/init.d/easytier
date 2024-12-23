@@ -363,8 +363,6 @@ start_et() {
                 [ -z "$socks_port" ] || procd_append_param command --socks5 "$socks_port"
 	     fi
 		if [ "$etcmd" = "web" ] ; then
-			procd_open_instance "easytier"
-			procd_set_param command "$easytierbin"
 			[ -z "$web_config" ] || procd_append_param command -w "$web_config"
 		fi
 	     
