@@ -106,7 +106,8 @@ start_et() {
 	         	chmod +x /tmp/easytier-linux-${cpucore}/easytier-*
 	         	mv -f /tmp/easytier-linux-${cpucore}/easytier-* ${path}/
                  	chmod +x "$easytierbin"
-                	 rm -rf /tmp/easytier.zip /tmp/easytier-linux-${cpucore}
+                	 rm -rf /tmp/easytier.zip "/tmp/easytier-linux-${cpucore}"
+			break
                  	if [ "$($easytierbin -h 2>&1 | wc -l)" -gt 3 ]; then
                    		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : ${easytierbin} 下载成功" >>/tmp/easytier.log
                  	else
@@ -122,7 +123,7 @@ start_et() {
                 fi
                 chmod +x "$easytierbin" 
                 chmod +x ${path}/easytier-cli
-                ver="$($easytierbin -V | awk {'print $2'} | te -d '~')"
+                ver="$($easytierbin -V | awk {'print $2'} | tr -d '~')"
                 [ ! -z "$ver" ] && echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : ${easytierbin}当前版本号-${ver} " >>/tmp/easytier.log
                 pgrep -f easytier_check | xargs kill -9 >/dev/null 2>&1
 		pgrep -f easytier_checklog | xargs kill -9 >/dev/null 2>&1
