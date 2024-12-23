@@ -360,7 +360,7 @@ start_et() {
                 [ "$relay_all" = "0" ] || procd_append_param command --relay-all-peer-rpc
                 [ -z "$socks_port" ] || procd_append_param command --socks5 "$socks_port"
         fi
-		[ ! -z "$instance_name" ] && ln -sf /tmp/easytier-${instance_name}.${date_time} /tmp/easytier.log
+		[ ! -z "$instance_name" ] && ln -sf /tmp/easytier-${instance_name}.${date_time}.log /tmp/easytier.log
 		
 		procd_set_param limits core="unlimited"
 		procd_set_param limits nofile="1000000 1000000"
@@ -483,10 +483,10 @@ start_service() {
                     ins_name=$(cat /etc/easytier/config.toml | grep "instance_name =" | awk '{print $3}'| tr -d '" ')
           fi
 	if [ ! -z "$ins_name" ] ; then
-	  touch /tmp/easytier-${ins_name}.${date_time}
+	  touch /tmp/easytier-${ins_name}.${date_time}.log
 	  ln -sf /tmp/easytier-${ins_name}.${date_time} /tmp/easytier.log
 	else
-	  touch /tmp/easytier-default.${date_time}
+	  touch /tmp/easytier-default.${date_time}.log
           ln -sf /tmp/easytier-default.${date_time} /tmp/easytier.log
           fi
 	cputype=$(uname -ms | tr ' ' '_' | tr '[A-Z]' '[a-z]')
