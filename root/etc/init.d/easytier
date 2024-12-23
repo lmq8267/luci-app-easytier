@@ -485,8 +485,7 @@ start_et() {
 while true; do
  
 sleep 120 
-find /tmp -type f -name "easytier-*.*.log" -size +2000k -exec sh -c 'echo -n > {}' \;
-echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 日志文件超过2M 清空... " >/tmp/easytier.log
+find /tmp -type f -name "easytier-*.*.log" -size +2000k -exec sh -c 'echo -n > {}' \; && echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 日志文件超过2M 清空... " >/tmp/easytier.log
 done
 EOF
   chmod +x /tmp/easytier_checklog
