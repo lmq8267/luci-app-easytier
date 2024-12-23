@@ -135,32 +135,36 @@ listener6:depends("listenermode", "ON")
 listener6:depends("etcmd", "etcmd")
 
 tcp_port = s:taboption("general",Value, "tcp_port", translate("tcp/udp端口"),
-	translate("tcp/udp协议，端口号：11010，表示 tcp/udp 将在 11010 上监听"))
+	translate("tcp/udp协议，端口号：11010，表示 tcp/udp 将在 11010 上监听 <br>如果是WEB配置请填写和WEB配置一样的监听端口用于防火墙放行"))
 tcp_port.datatype = "range(1,65535)"
 tcp_port.default = "11010"
 tcp_port:depends("listenermode", "ON")
 tcp_port:depends("etcmd", "etcmd")
+tcp_port:depends("etcmd", "web")
 
 ws_port = s:taboption("general",Value, "ws_port", translate("ws端口"),
-	translate("ws协议，端口号：11011，表示 ws 将在 11011 上监听"))
+	translate("ws协议，端口号：11011，表示 ws 将在 11011 上监听 <br>如果是WEB配置请填写和WEB配置一样的监听端口用于防火墙放行"))
 ws_port.datatype = "range(1,65535)"
 ws_port.default = "11011"
 ws_port:depends("listenermode", "ON")
 ws_port:depends("etcmd", "etcmd")
+ws_port:depends("etcmd", "web")
 
 wss_port = s:taboption("general",Value, "wss_port", translate("wss端口"),
-	translate("wss协议，端口号：11012，表示 wss 将在 11012 上监听"))
+	translate("wss协议，端口号：11012，表示 wss 将在 11012 上监听 <br>如果是WEB配置请填写和WEB配置一样的监听端口用于防火墙放行"))
 wss_port.datatype = "range(1,65535)"
 wss_port.default = "11012"
 wss_port:depends("listenermode", "ON")
 wss_port:depends("etcmd", "etcmd")
+wss_port:depends("etcmd", "web")
 
 wg_port = s:taboption("general",Value, "wg_port", translate("wg端口"),
-	translate("wireguard协议，端口号：11011，表示 wg 将在 11011 上监听"))
+	translate("wireguard协议，端口号：11011，表示 wg 将在 11011 上监听 <br>如果是WEB配置请填写和WEB配置一样的监听端口用于防火墙放行"))
 wg_port.datatype = "range(1,65535)"
 wg_port.placeholder = "11011"
 wg_port:depends("listenermode", "ON")
 wg_port:depends("etcmd", "etcmd")
+wg_port:depends("etcmd", "web")
 
 local model = nixio.fs.readfile("/proc/device-tree/model") or ""
 local hostname = nixio.fs.readfile("/proc/sys/kernel/hostname") or ""
@@ -200,9 +204,10 @@ default_protocol:value("wss")
 default_protocol:depends("etcmd", "etcmd")
 
 tunname = s:taboption("privacy",Value, "tunname", translate("虚拟网卡名称"),
-	translate("自定义虚拟网卡TUN接口的名称（--dev-name 参数）"))
+	translate("自定义虚拟网卡TUN接口的名称（--dev-name 参数）<br>如果是WEB配置请填写和WEB配置一样的虚拟网卡名称用于防火墙放行"))
 tunname.placeholder = "easytier"
 tunname:depends("etcmd", "etcmd")
+tunname:depends("etcmd", "web")
 
 disable_encryption = s:taboption("general",Flag, "disable_encryption", translate("禁用加密"),
 	translate("禁用对等节点通信的加密，若关闭加密则其他节点也必须关闭加密 （-u 参数）"))
