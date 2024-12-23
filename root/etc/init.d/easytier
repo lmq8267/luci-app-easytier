@@ -125,6 +125,7 @@ start_et() {
                 ver="$($easytierbin -h | grep version | awk -F ':' {'print $2'})"
                 [ ! -z "$ver" ] && echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : ${easytierbin}当前版本号-${ver} " >>/tmp/easytier.log
                 pgrep -f easytier_check | xargs kill -9 >/dev/null 2>&1
+		pgrep -f easytier_checklog | xargs kill -9 >/dev/null 2>&1
                 ps | grep 'easytier-core' | grep -v grep | awk '{print $1}' | xargs kill >/dev/null 2>&1
                 ps | grep 'easytier-core' | grep -v grep | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
           if [ "$etcmd" = "config" ] ; then 
@@ -268,7 +269,7 @@ start_et() {
                 
 		procd_open_instance "easytier"
 		procd_set_param command "$easytierbin"
-		#if [ "$etcmd" = "etcmd" ] ; then
+		if [ "$etcmd" = "etcmd" ] ; then
 		[ -z "$network_name" ] || procd_append_param command --network-name "$network_name"
 		[ -z "$network_secret" ] || procd_append_param command --network-secret "$network_secret"
 		[ -z "$ipaddr" ] || procd_append_param command -i "$ipaddr"
@@ -359,6 +360,13 @@ start_et() {
                 [ "$disable_udp" = "0" ] || procd_append_param command --disable-udp-hole-punching
                 [ "$relay_all" = "0" ] || procd_append_param command --relay-all-peer-rpc
                 [ -z "$socks_port" ] || procd_append_param command --socks5 "$socks_port"
+	     fi
+		if [ "$etcmd" = "web" ] ; then
+			procd_open_instance "easytier"
+			procd_set_param command "$easytierbin"
+			[ -z "$web_config" ] || procd_append_param command -w "$web_config"
+		fi
+	     
         fi
 		[ ! -z "$instance_name" ] && ln -sf /tmp/easytier-${instance_name}.${date_time}.log /tmp/easytier.log
 		
@@ -379,7 +387,7 @@ start_et() {
 		    uci set firewall.easytier_socks5.dest_port="$socks_port"
 		    uci set firewall.easytier_socks5.enabled="1"
                 fi
-                if [ "$listenermode" = "ON" ] ; then
+                if [ "$listenermode" = "ON" ] || [ "$etcmd" = "web" ] ; then
                   if [ -z "$tcp_port" ] && [ -z "$ws_port" ] && [ -z "$wss_port" ] && [ -z "$wg_port" ] ; then
                      tcp_port="11010"
                      ws_port="11011"
@@ -470,7 +478,19 @@ start_et() {
                 echo `date +%s` > /tmp/easytier_time
 
 
+  cat > /tmp/easytier_checklog<<'EOF'
+#!/bin/sh
 
+while true; do
+ 
+sleep 120 
+find /tmp -type f -name "easytier-*.*.log" -size +2000k -exec sh -c 'echo -n > {}' \;
+echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 日志文件超过2M 清空... " >/tmp/easytier.log
+done
+EOF
+  chmod +x /tmp/easytier_checklog
+  /tmp/easytier_checklog &
+fi
 }
 
 start_service() {
@@ -508,6 +528,7 @@ start_service() {
 
 stop_service() {
                 pgrep -f easytier_check | xargs kill -9 >/dev/null 2>&1
+		pgrep -f easytier_checklog | xargs kill -9 >/dev/null 2>&1
                 ps | grep 'easytier-core' | grep -v grep | awk '{print $1}' | xargs kill >/dev/null 2>&1
                 ps | grep 'easytier-core' | grep -v grep | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
                 uci -q delete network.EasyTier >/dev/null 2>&1
