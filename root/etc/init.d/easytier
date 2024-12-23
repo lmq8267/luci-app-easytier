@@ -267,6 +267,7 @@ start_et() {
                 config_get_bool relay_all "$cfg" 'relay_all' '0'
                 config_get checkip "$cfg" 'checkip'
                 config_get socks_port "$cfg" 'socks_port'
+		config_get comp "$cfg" 'comp' 'none'
                 
 		procd_open_instance "easytier"
 		procd_set_param command "$easytierbin"
@@ -361,6 +362,7 @@ start_et() {
                 [ "$disable_udp" = "0" ] || procd_append_param command --disable-udp-hole-punching
                 [ "$relay_all" = "0" ] || procd_append_param command --relay-all-peer-rpc
                 [ -z "$socks_port" ] || procd_append_param command --socks5 "$socks_port"
+		[ "$comp" = "none" ] || procd_append_param command --compression "$comp"
 	     fi
 		if [ "$etcmd" = "web" ] ; then
 			[ -z "$web_config" ] || procd_append_param command -w "$web_config"
