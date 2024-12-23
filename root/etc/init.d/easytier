@@ -52,7 +52,7 @@ start_et() {
 		local enabled easytierbin etcmd
 		config_get_bool enabled "$cfg" 'enabled' '0'
 		[ "$enabled" = "1" ] || return 1
-                config_get easytierbin "$cfg" 'easytierbin' '/tmp/easytier-core'
+                config_get easytierbin "$cfg" 'easytierbin' '/usr/bin/easytier-core'
                 config_get etcmd "$cfg" 'etcmd' 'etcmd'
                 echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : easytier-core_${cpucore}开始启动" >>/tmp/easytier.log
 		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 若启动失败，请打开 状态 - 系统日志 找到easytier相关的字眼查看启动失败错误的原因" >>/tmp/easytier.log
@@ -490,7 +490,7 @@ done
 EOF
   chmod +x /tmp/easytier_checklog
   /tmp/easytier_checklog &
-fi
+
 }
 
 start_service() {
