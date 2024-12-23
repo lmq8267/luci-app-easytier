@@ -248,7 +248,6 @@ start_et() {
                 config_get instance_name "$cfg" 'instance_name'
                 config_get vpn_portal "$cfg" 'vpn_portal'
 		config_get mtu "$cfg" 'mtu'
-		config_get comp "$cfg" 'comp'
                 config_get default_protocol "$cfg" 'default_protocol'
                 config_get_bool disable_encryption "$cfg" 'disable_encryption' '0'
                 config_get whitelist "$cfg" 'whitelist'
