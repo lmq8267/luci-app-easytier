@@ -563,6 +563,6 @@ reload_service() {
 }
 
 service_triggers() {
-	procd_add_reload_trigger "eaytier"
+	procd_add_reload_trigger "easytier"
         procd_add_interface_trigger "interface.*.up" wan /etc/init.d/easytier reload
 }
