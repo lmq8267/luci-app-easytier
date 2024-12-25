@@ -526,6 +526,7 @@ start_service() {
 }
 
 stop_service() {
+		config_load 'easytier'
                 pgrep -f easytier_check | xargs kill -9 >/dev/null 2>&1
 		pgrep -f easytier_checklog | xargs kill -9 >/dev/null 2>&1
                 ps | grep 'easytier-core' | grep -v grep | awk '{print $1}' | xargs kill >/dev/null 2>&1
