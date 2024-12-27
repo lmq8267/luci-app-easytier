@@ -540,10 +540,10 @@ start_service() {
           fi
 	if [ ! -z "$ins_name" ] ; then
 	  touch /tmp/easytier-${ins_name}.${date_time}.log
-	  ln -sf /tmp/easytier-${ins_name}.${date_time} /tmp/easytier.log
+	  ln -sf /tmp/easytier-${ins_name}.${date_time}.log /tmp/easytier.log
 	else
 	  touch /tmp/easytier-default.${date_time}.log
-          ln -sf /tmp/easytier-default.${date_time} /tmp/easytier.log
+          ln -sf /tmp/easytier-default.${date_time}.log /tmp/easytier.log
           fi
 	cputype=$(uname -ms | tr ' ' '_' | tr '[A-Z]' '[a-z]')
         [ -n "$(echo $cputype | grep -E "linux.*armv.*")" ] && cpucore="arm" 
