@@ -6,58 +6,50 @@ USE_PROCD=1
 size="$(df -k | awk '/\/overlay$/ {sub(/K$/, "", $4); print $4}')"
 [ -z "$size" ] && size="$(df -k /usr/bin | awk 'NR==2 {print $(NF-2) }')"
 
-check () {
-if [ ! -z "$checkip" ] ; then
-  echo ' ' >/tmp/easytier_check
-  cat > /tmp/easytier_check<<'EOF'
+check() {
+    if [ ! -z "$checkip" ]; then
+        echo ' ' >/tmp/easytier_check
+        cat > /tmp/easytier_check <<'EOF'
 #!/bin/sh
 time="$(($(uci -q get easytier.@easytier[0].checktime) * 60))"
-  if [ -z "$time" ] ;then
-     time=120
-     uci -q set easytier.@easytier[0].checktime=2
-     uci commit easytier
-  fi 
+if [ -z "$time" ]; then
+    time=120
+    uci -q set easytier.@easytier[0].checktime=2
+    uci commit easytier
+fi
+
 while true; do
-  if [ "$(uci -q get easytier.@easytier[0].enabled)" = "1" ] ; then
-    ping -c 3 223.5.5.5 -w 5 >/dev/null 2>&1
-    if [ "$?" == "0" ]; then
-        if [ ! -z "$(uci -q get easytier.@easytier[0].checkip)" ] ; then
-           online=""
-           for ip in $(uci -q get easytier.@easytier[0].checkip); do
-           ms=`echo $(ping -4 $ip  -c 2 -w 4 -q) | awk -F '/' '{print $4}'`
-           [ ! -z "$ms" ] && echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 通断检测：${ip} 延迟：${ms}ms " >>/tmp/easytier.log && online=1
-           [ -z "$ms" ] && echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 通断检测：${ip} 网络中断 " >>/tmp/easytier.log
-           done     
-           [ "$online" != "1" ] && echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 通断检测：$(uci -q get easytier.@easytier[0].checkip) 所有指定IP皆无法ping通,重新启动程序！ " >>/tmp/easytier.log && /etc/init.d/easytier restart
+    if [ "$(uci -q get easytier.@easytier[0].enabled)" = "1" ]; then
+        ping -c 3 223.5.5.5 -w 5 >/dev/null 2>&1
+        if [ "$?" == "0" ]; then
+            if [ ! -z "$(uci -q get easytier.@easytier[0].checkip)" ]; then
+                online=""
+                for ip in $(uci -q get easytier.@easytier[0].checkip); do
+                    ms=`echo $(ping -4 $ip -c 2 -w 4 -q) | awk -F '/' '{print $4}'`
+                    [ ! -z "$ms" ] && echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 通断检测：${ip} 延迟：${ms}ms " >>/tmp/easytier.log && online=1
+                    [ -z "$ms" ] && echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 通断检测：${ip} 网络中断 " >>/tmp/easytier.log
+                done
+                [ "$online" != "1" ] && echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 通断检测：$(uci -q get easytier.@easytier[0].checkip) 所有指定IP皆无法ping通,重新启动程序！ " >>/tmp/easytier.log && /etc/init.d/easytier restart
+            fi
+        else
+            echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 通断检测：检测到互联网未能成功访问，跳过检测 " >>/tmp/easytier.log
         fi
-     else
-        echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 通断检测：检测到互联网未能成功访问，跳过检测 " >>/tmp/easytier.log
+    else
+        echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 通断检测：程序已关闭，退出检测 " >>/tmp/easytier.log
+        /etc/init.d/easytier restart
+        break
     fi
- else
- echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 通断检测：程序已关闭，退出检测 " >>/tmp/easytier.log
- /etc/init.d/easytier restart
- break
- fi
-sleep $((time))
-[ "$(du -k /log/easytier.log | cut -f1)" = "1000" ] && echo " " >/tmp/easytier.log
+    sleep $((time))
+    [ "$(du -k /log/easytier.log | cut -f1)" = "1000" ] && echo " " >/tmp/easytier.log
 done
 EOF
-  chmod +x /tmp/easytier_check
-  /tmp/easytier_check &
-fi
+        chmod +x /tmp/easytier_check
+        /tmp/easytier_check &
+    fi
 }
 
-start_et() {
-                local cfg="$1"
-		local enabled easytierbin etcmd
-		config_get_bool enabled "$cfg" 'enabled' '0'
-		[ "$enabled" = "1" ] || return 1
-                config_get easytierbin "$cfg" 'easytierbin' '/usr/bin/easytier-core'
-                config_get etcmd "$cfg" 'etcmd' 'etcmd'
-                echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : easytier-core_${cpucore}开始启动" >>/tmp/easytier.log
-		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 若启动失败，请打开 状态 - 系统日志 找到easytier相关的字眼查看启动失败错误的原因" >>/tmp/easytier.log
-                [ ! -s /usr/lib/opkg/info/kmod-tun.list ] && echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 缺少kmod-tun插件" >>/tmp/easytier.log
-                path=$(dirname "$easytierbin")
+check_bin() {
+		path=$(dirname "$easytierbin")
                 if [ -f /tmp/easytier-core ] || [ -f /tmp/easytier-cli ] && [ "${path:0:4}" != "/tmp" ] ;then
                    chmod +x /tmp/easytier-core 2>/dev/null
                    chmod +x /tmp/easytier-cli 2>/dev/null
@@ -121,16 +113,10 @@ start_et() {
 		     fi
 		done
                 fi
-                chmod +x "$easytierbin" 
-                chmod +x ${path}/easytier-cli
-                ver="$($easytierbin -V | awk {'print $2'} | tr -d '~')"
-                [ ! -z "$ver" ] && echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : ${easytierbin}当前版本号-${ver} " >>/tmp/easytier.log
-                pgrep -f easytier_check | xargs kill -9 >/dev/null 2>&1
-		pgrep -f easytier_checklog | xargs kill -9 >/dev/null 2>&1
-                ps | grep 'easytier-core' | grep -v grep | awk '{print $1}' | xargs kill >/dev/null 2>&1
-                ps | grep 'easytier-core' | grep -v grep | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
-          if [ "$etcmd" = "config" ] ; then 
-                   config_file="/etc/easytier/config.toml"
+}
+
+check_config() {
+		   config_file="/etc/easytier/config.toml"
                    instance_name=$(cat $config_file | grep "instance_name =" | awk '{print $3}'| tr -d '" ')
                    socks_port=$(cat $config_file | grep "socks5_proxy" | awk -F ":" '{print $3}'| tr -d '" ')
                    [ -z "$(grep -F 'listeners = []' $config_file)" ] && listenermode="ON"
@@ -222,7 +208,9 @@ start_et() {
 		      uci set firewall.easytier_v6wg.dest_port="$v6wg_port"
 		      uci set firewall.easytier_v6wg.enabled="1"
 	           fi
-         else
+}
+
+get_etconfig() {
 		local network_name network_secret ip_dhcp ipaddr peeradd external_node rpc_portal listenermode tunname relay_network disable_p2p disable_udp web_config
 		local tcp_port ws_port wss_port wg_port desvice_name instance_name vpn_portal mtu default_protocol disable_encryption whitelist socks_port comp
 		local multi_thread disable_ipv6 latency_first exit_node exit_nodes smoltcp no_tun manual_routes log check checkip proxy_network relay_all listener6
@@ -267,7 +255,113 @@ start_et() {
                 config_get checkip "$cfg" 'checkip'
                 config_get socks_port "$cfg" 'socks_port'
 		config_get comp "$cfg" 'comp' 'none'
-                
+}
+
+set_firewall() {
+		if [ "$listenermode" = "ON" ] || [ "$etcmd" = "web" ] ; then
+		if [ ! -z "$tcp_port" ] ; then
+                    uci -q delete firewall.easytier_tcp_udp
+		    uci set firewall.easytier_tcp_udp=rule
+		    uci set firewall.easytier_tcp_udp.name="easytier_tcp_udp"
+		    uci set firewall.easytier_tcp_udp.target="ACCEPT"
+		    uci set firewall.easytier_tcp_udp.src="wan"
+		    uci set firewall.easytier_tcp_udp.proto="all"
+		    uci set firewall.easytier_tcp_udp.dest_port="$tcp_port"
+		    uci set firewall.easytier_tcp_udp.enabled="1"
+		 fi
+                 if [ ! -z "$wss_port" ] ; then
+		    uci -q delete firewall.easytier_wss
+		    uci set firewall.easytier_wss=rule
+		    uci set firewall.easytier_wss.name="easytier_wss"
+		    uci set firewall.easytier_wss.target="ACCEPT"
+		    uci set firewall.easytier_wss.src="wan"
+		    uci set firewall.easytier_wss.proto="all"
+		    uci set firewall.easytier_wss.dest_port="$wss_port"
+		    uci set firewall.easytier_wss.enabled="1"
+		 fi
+                   if [ ! -z "$ws_port" ] ; then
+		    uci -q delete firewall.easytier_ws
+		    uci set firewall.easytier_ws=rule
+		    uci set firewall.easytier_ws.name="easytier_ws"
+		    uci set firewall.easytier_ws.target="ACCEPT"
+		    uci set firewall.easytier_ws.src="wan"
+		    uci set firewall.easytier_ws.proto="all"
+		    uci set firewall.easytier_ws.dest_port="$ws_port"
+		    uci set firewall.easytier_ws.enabled="1"
+		   fi
+                   if [ ! -z "$wg_port" ] ; then
+		    uci -q delete firewall.easytier_wg
+		    uci set firewall.easytier_wg=rule
+		    uci set firewall.easytier_wg.name="easytier_wg"
+		    uci set firewall.easytier_wg.target="ACCEPT"
+		    uci set firewall.easytier_wg.src="wan"
+		    uci set firewall.easytier_wg.proto="all"
+		    uci set firewall.easytier_wg.dest_port="$wg_port"
+		    uci set firewall.easytier_wg.enabled="1"
+		   fi
+                fi
+		[ -z "$tunname" ] && tunname="tun0"
+                uci -q delete network.EasyTier >/dev/null 2>&1
+	        if [ -z "$(uci -q get network.EasyTier)" ];  then				
+			uci set network.EasyTier='interface'
+                       if [ -z "$ipaddr" ]; then
+				uci set network.EasyTier.proto='none'
+			else
+				uci set network.EasyTier.proto='static'
+				uci set network.EasyTier.ipaddr=$ipaddr
+				uci set network.EasyTier.netmask='255.0.0.0'
+			fi
+                       uci set network.EasyTier.device="$tunname"
+                       uci set network.EasyTier.ifname="$tunname"
+		fi
+		if [ -z "$(uci -q get firewall.easytierzone)" ];  then
+				uci set firewall.easytierzone='zone'
+				uci set firewall.easytierzone.input='ACCEPT'
+				uci set firewall.easytierzone.output='ACCEPT'
+				uci set firewall.easytierzone.forward='ACCEPT'
+				uci set firewall.easytierzone.masq='1'
+                                uci set firewall.easytierzone.mtu_fix='1'
+				uci set firewall.easytierzone.name='EasyTier'
+				uci set firewall.easytierzone.network='EasyTier'
+		fi
+		uci set firewall.easytierfwlan=forwarding
+		uci set firewall.easytierfwlan.dest='lan'
+		uci set firewall.easytierfwlan.src='EasyTier'
+                uci set firewall.easytierfwwan=forwarding
+		uci set firewall.easytierfwwan.dest='wan'
+		uci set firewall.easytierfwwan.src='EasyTier'
+                uci set firewall.lanfweasytier=forwarding
+		uci set firewall.lanfweasytier.dest='EasyTier'
+		uci set firewall.lanfweasytier.src='lan'
+                uci set firewall.wanfweasytier=forwarding
+		uci set firewall.wanfweasytier.dest='EasyTier'
+		uci set firewall.wanfweasytier.src='wan'
+	
+}
+
+start_et() {
+                local cfg="$1"
+		local enabled easytierbin etcmd
+		config_get_bool enabled "$cfg" 'enabled' '0'
+		[ "$enabled" = "1" ] || return 1
+                config_get easytierbin "$cfg" 'easytierbin' '/usr/bin/easytier-core'
+                config_get etcmd "$cfg" 'etcmd' 'etcmd'
+                echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : easytier-core_${cpucore}开始启动" >>/tmp/easytier.log
+		echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 若启动失败，请打开 状态 - 系统日志 找到easytier相关的字眼查看启动失败错误的原因" >>/tmp/easytier.log
+                [ ! -s /usr/lib/opkg/info/kmod-tun.list ] && echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : 缺少kmod-tun插件" >>/tmp/easytier.log
+                check_bin
+                chmod +x "$easytierbin" 
+                chmod +x ${path}/easytier-cli
+                ver="$($easytierbin -V | awk {'print $2'} | tr -d '~')"
+                [ ! -z "$ver" ] && echo "$(date '+%Y-%m-%d %H:%M:%S') easytier : ${easytierbin}当前版本号-${ver} " >>/tmp/easytier.log
+                pgrep -f easytier_check | xargs kill -9 >/dev/null 2>&1
+		pgrep -f easytier_checklog | xargs kill -9 >/dev/null 2>&1
+                ps | grep 'easytier-core' | grep -v grep | awk '{print $1}' | xargs kill >/dev/null 2>&1
+                ps | grep 'easytier-core' | grep -v grep | awk '{print $1}' | xargs kill -9 >/dev/null 2>&1
+          if [ "$etcmd" = "config" ] ; then 
+                check_config  
+         else
+		get_etconfig
 		procd_open_instance
 		procd_set_param command "$easytierbin"
 		if [ "$etcmd" = "etcmd" ] ; then
@@ -394,83 +488,8 @@ start_et() {
                      wss_port="11012"
                      wg_port="11011"
                   fi
-                  if [ ! -z "$tcp_port" ] ; then
-                    uci -q delete firewall.easytier_tcp_udp
-		    uci set firewall.easytier_tcp_udp=rule
-		    uci set firewall.easytier_tcp_udp.name="easytier_tcp_udp"
-		    uci set firewall.easytier_tcp_udp.target="ACCEPT"
-		    uci set firewall.easytier_tcp_udp.src="wan"
-		    uci set firewall.easytier_tcp_udp.proto="all"
-		    uci set firewall.easytier_tcp_udp.dest_port="$tcp_port"
-		    uci set firewall.easytier_tcp_udp.enabled="1"
-		 fi
-                 if [ ! -z "$wss_port" ] ; then
-		    uci -q delete firewall.easytier_wss
-		    uci set firewall.easytier_wss=rule
-		    uci set firewall.easytier_wss.name="easytier_wss"
-		    uci set firewall.easytier_wss.target="ACCEPT"
-		    uci set firewall.easytier_wss.src="wan"
-		    uci set firewall.easytier_wss.proto="all"
-		    uci set firewall.easytier_wss.dest_port="$wss_port"
-		    uci set firewall.easytier_wss.enabled="1"
-		 fi
-                   if [ ! -z "$ws_port" ] ; then
-		    uci -q delete firewall.easytier_ws
-		    uci set firewall.easytier_ws=rule
-		    uci set firewall.easytier_ws.name="easytier_ws"
-		    uci set firewall.easytier_ws.target="ACCEPT"
-		    uci set firewall.easytier_ws.src="wan"
-		    uci set firewall.easytier_ws.proto="all"
-		    uci set firewall.easytier_ws.dest_port="$ws_port"
-		    uci set firewall.easytier_ws.enabled="1"
-		   fi
-                   if [ ! -z "$wg_port" ] ; then
-		    uci -q delete firewall.easytier_wg
-		    uci set firewall.easytier_wg=rule
-		    uci set firewall.easytier_wg.name="easytier_wg"
-		    uci set firewall.easytier_wg.target="ACCEPT"
-		    uci set firewall.easytier_wg.src="wan"
-		    uci set firewall.easytier_wg.proto="all"
-		    uci set firewall.easytier_wg.dest_port="$wg_port"
-		    uci set firewall.easytier_wg.enabled="1"
-		   fi
-                fi
-		[ -z "$tunname" ] && tunname="tun0"
-                uci -q delete network.EasyTier >/dev/null 2>&1
-	        if [ -z "$(uci -q get network.EasyTier)" ];  then				
-			uci set network.EasyTier='interface'
-                       if [ -z "$ipaddr" ]; then
-				uci set network.EasyTier.proto='none'
-			else
-				uci set network.EasyTier.proto='static'
-				uci set network.EasyTier.ipaddr=$ipaddr
-				uci set network.EasyTier.netmask='255.0.0.0'
-			fi
-                       uci set network.EasyTier.device="$tunname"
-                       uci set network.EasyTier.ifname="$tunname"
+                set_firewall  
 		fi
-		if [ -z "$(uci -q get firewall.easytierzone)" ];  then
-				uci set firewall.easytierzone='zone'
-				uci set firewall.easytierzone.input='ACCEPT'
-				uci set firewall.easytierzone.output='ACCEPT'
-				uci set firewall.easytierzone.forward='ACCEPT'
-				uci set firewall.easytierzone.masq='1'
-                                uci set firewall.easytierzone.mtu_fix='1'
-				uci set firewall.easytierzone.name='EasyTier'
-				uci set firewall.easytierzone.network='EasyTier'
-		fi
-		uci set firewall.easytierfwlan=forwarding
-		uci set firewall.easytierfwlan.dest='lan'
-		uci set firewall.easytierfwlan.src='EasyTier'
-                uci set firewall.easytierfwwan=forwarding
-		uci set firewall.easytierfwwan.dest='wan'
-		uci set firewall.easytierfwwan.src='EasyTier'
-                uci set firewall.lanfweasytier=forwarding
-		uci set firewall.lanfweasytier.dest='EasyTier'
-		uci set firewall.lanfweasytier.src='lan'
-                uci set firewall.wanfweasytier=forwarding
-		uci set firewall.wanfweasytier.dest='EasyTier'
-		uci set firewall.wanfweasytier.src='wan'
                 [ -n "$(uci changes network)" ] && uci commit network && /etc/init.d/network reload >/dev/null 2>&1
 		[ -n "$(uci changes firewall)" ] && uci commit firewall && /etc/init.d/firewall reload >/dev/null 2>&1
 		[ -z "$proxy_network" ] || sysctl -w net.ipv4.ip_forward=1 >/dev/null 2>&1
