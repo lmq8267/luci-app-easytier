@@ -93,7 +93,7 @@ jobs:
           mv luci-app-easytier*.apk luci-app-easytier_${{ matrix.TARGET }}_${{ matrix.NAME }}.apk
           mkdir -p /opt/outapk
           cp -rf *.apk /opt/outapk/
-          
+          echo "跳过签名验证安装命令： apk add --allow-untrusted luci-app-easytier_${{ matrix.TARGET }}_${{ matrix.NAME }}.apk"
       - name: 上传
         uses: actions/upload-artifact@v4
         with:
