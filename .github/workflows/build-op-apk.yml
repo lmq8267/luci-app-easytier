@@ -3,6 +3,10 @@ name: 编译luci-app-easytier_op-apk
 on:
   workflow_dispatch:
 
+env:
+  TZ: Asia/Shanghai
+permissions:
+  contents: write
 jobs:
  build:
     strategy:
@@ -83,6 +87,8 @@ jobs:
           cd /opt/openwrt-sdk*
           ./scripts/feeds update -a
           make defconfig
+          PKG_VERSION=$(cat /opt/luci-app-easytier/Makefile | grep "^PKG_VERSION" | awk -F ':=' '{print $2}' | tr -d ' ')
+          echo "tag=$PKG_VERSION" >> $GITHUB_ENV
       - name: 开始编译
         run: |
           sudo timedatectl set-timezone Asia/Shanghai
@@ -94,9 +100,25 @@ jobs:
           mkdir -p /opt/outapk
           cp -rf *.apk /opt/outapk/
           echo "跳过签名验证安装命令： apk add --allow-untrusted luci-app-easytier_${{ matrix.TARGET }}_${{ matrix.NAME }}.apk"
+          echo "build_time=$(date '+%Y-%m-%d %H:%M:%S')" >> $GITHUB_ENV
       - name: 上传
         uses: actions/upload-artifact@v4
         with:
           name: luci-app-easytier_${{ matrix.TARGET }}_${{ matrix.NAME }}_APK
           path: /opt/outapk/
-     
+      - name: 发布
+        uses: softprops/action-gh-release@v2
+        with:
+            token: ${{ secrets.GITHUB_TOKEN }}
+            body: |
+             > ### 编译时间 ：${{ env.build_time }}
+             
+             - 需要先去系统自带的软件包里已经安装 _**luci**_ 和 _**luci-base**_ 和 _**luci-compat**_ 和 _**kmod-tun**_ 再安装这个ipk才能显示界面
+             
+             - 安装完成后找不到界面入口的，请注销登录关闭当前浏览器窗口重新打开或重启路由器
+             
+             - **`luci-app-easytier-*.apk` 是OpenWrt新版的APK包** 对于apk包跳过证书命令
+             `apk add --allow-untrusted luci-app-easytier.apk`
+           
+            tag_name: ${{ env.tag }}
+            files: /opt/outapk/*
