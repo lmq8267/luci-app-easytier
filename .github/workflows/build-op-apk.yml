@@ -26,7 +26,7 @@ jobs:
             URL: https://mirror-03.infra.openwrt.org/snapshots/targets/x86/generic/openwrt-sdk-x86-generic_gcc-13.3.0_musl.Linux-x86_64.tar.zst
 
           - TARGET: aarch64_generic
-            NAME: rockchip/armv8
+            NAME: rockchip_armv8
             URL: https://mirror-03.infra.openwrt.org/snapshots/targets/rockchip/armv8/openwrt-sdk-rockchip-armv8_gcc-13.3.0_musl.Linux-x86_64.tar.zst
 
           - TARGET: arm_arm1176jzf-s_vfp
@@ -56,33 +56,58 @@ jobs:
           - TARGET: arm_cortex-a7
             NAME: mediatek_mt7629
             URL: https://mirror-03.infra.openwrt.org/snapshots/targets/mediatek/mt7629/openwrt-sdk-mediatek-mt7629_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
-            
 
+          - TARGET: arm_cortex-a9
+            NAME: bcm53xx_generic
+            URL: https://mirror-03.infra.openwrt.org/snapshots/targets/bcm53xx/generic/openwrt-sdk-bcm53xx-generic_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
 
-          
-            
-    runs-on: ${{ matrix.OS }}
-    env:
-      OS: ${{ matrix.OS }}
+          - TARGET: arm_cortex-a9_vfpv3-d16
+            NAME: mvebu_cortexa9
+            URL: https://mirror-03.infra.openwrt.org/snapshots/targets/mvebu/cortexa9/openwrt-sdk-mvebu-cortexa9_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
+
+          - TARGET: aarch64_cortex-a76
+            NAME: bcm27xx/bcm2712
+            URL: https://mirror-03.infra.openwrt.org/snapshots/targets/bcm27xx/bcm2712/openwrt-sdk-bcm27xx-bcm2712_gcc-13.3.0_musl.Linux-x86_64.tar.zst
+
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: 下载工具链
+      - uses: actions/checkout@v4
+      - name: 安装SDK
         run: |
-          
+          wget -qO /opt/sdk.tar.zst ${{ matrix.URL }}
+          tar -I zstd -xf /opt/sdk.tar.zst -C /opt
+          cp -R ${{ github.workspace }} /opt/luci-app-easytier
+          cd /opt/openwrt-sdk*/package
+          cp -R /opt/luci-app-easytier .
+          cd /opt/openwrt-sdk*
+          ./scripts/feeds update -a
+          make defconfig
       - name: 开始编译
         run: |
+          sudo timedatectl set-timezone Asia/Shanghai
           cd /opt/openwrt-sdk*
+          #make package/luci-app-easytier/compile V=s -j1
+          make package/luci-app-easytier/compile -j1
+          cd /opt/openwrt-sdk*/bin/packages/${{ matrix.TARGET }}/base
+          mv luci-app-easytier*.apk luci-app-easytier_${{ matrix.TARGET }}_${{ matrix.NAME }}.apk
+          mkdir -p /opt/outapk
+          cp -rf *.apk /opt/outapk/
           echo "build_time=$(date '+%Y-%m-%d %H:%M:%S')" >> $GITHUB_ENV
+      - name: 上传
+        uses: actions/upload-artifact@v4
+        with:
+          name: luci-app-easytier_${{ matrix.TARGET }}_${{ matrix.NAME }}_APK
+          path: /opt/outapk/
       - name: 发布
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
             token: ${{ secrets.c8 }}
             body: |
              > ### 编译时间 ：${{ env.build_time }}
 
              
-             对应的[openwrt版本列表](https://downloads.openwrt.org/)
+             对应的[openwrt SDK列表](https://mirror-03.infra.openwrt.org/snapshots/targets)
            
             tag_name: r
-            files: /opt/openwrt-sdk*/bin/packages/mipsel_24kc/base/*
+            files: /opt/outapk/*
      
