@@ -92,22 +92,10 @@ jobs:
           mv luci-app-easytier*.apk luci-app-easytier_${{ matrix.TARGET }}_${{ matrix.NAME }}.apk
           mkdir -p /opt/outapk
           cp -rf *.apk /opt/outapk/
-          echo "build_time=$(date '+%Y-%m-%d %H:%M:%S')" >> $GITHUB_ENV
+          
       - name: 上传
         uses: actions/upload-artifact@v4
         with:
           name: luci-app-easytier_${{ matrix.TARGET }}_${{ matrix.NAME }}_APK
           path: /opt/outapk/
-      - name: 发布
-        uses: softprops/action-gh-release@v2
-        with:
-            token: ${{ secrets.c8 }}
-            body: |
-             > ### 编译时间 ：${{ env.build_time }}
-
-             
-             对应的[openwrt SDK列表](https://mirror-03.infra.openwrt.org/snapshots/targets)
-           
-            tag_name: r
-            files: /opt/outapk/*
      
