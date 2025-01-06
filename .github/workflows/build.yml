@@ -55,5 +55,5 @@ jobs:
              `apk add --allow-untrusted luci-app-easytier.apk`
            
             tag_name: ${{ env.tag }}
-            files: /opt/outapk/*
+            files: /opt/outipk/*
      
