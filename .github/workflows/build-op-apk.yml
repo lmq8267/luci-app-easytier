@@ -66,9 +66,10 @@ jobs:
             URL: https://mirror-03.infra.openwrt.org/snapshots/targets/mvebu/cortexa9/openwrt-sdk-mvebu-cortexa9_gcc-13.3.0_musl_eabi.Linux-x86_64.tar.zst
 
           - TARGET: aarch64_cortex-a76
-            NAME: bcm27xx/bcm2712
+            NAME: bcm27xx_bcm2712
             URL: https://mirror-03.infra.openwrt.org/snapshots/targets/bcm27xx/bcm2712/openwrt-sdk-bcm27xx-bcm2712_gcc-13.3.0_musl.Linux-x86_64.tar.zst
 
+          #使用其他型号 参考https://mirror-03.infra.openwrt.org/snapshots/targets 按上述格式添加
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
