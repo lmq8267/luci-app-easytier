@@ -1,5 +1,7 @@
 # luci-app-easytier
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/lmq8267/luci-app-easytier)
+
 依赖`kmod-tun`需要先在系统软件包里安装好
 ### 快速开始
 
